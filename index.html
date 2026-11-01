@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Rummy Scoreboard - Pool Rummy &amp; Best of 7 Points Scorer</title>
+  <meta name="description" content="Rummy Scoreboard: Indian Pool Rummy and Best of 7 Card Game Scorer with customizable drops, 2x double score rounds, dealer tracking, and flexible re-join rules.">
+  <meta name="theme-color" content="#0d281a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Rummy Scoreboard">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="stylesheet" href="style.css?v=2.4">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="header-container">
+      <div class="logo-area">
+        <span class="cards-icon">♠️♥️♦️♣️</span>
+        <div>
+          <h1 class="app-title">Rummy Scoreboard</h1>
+          <p class="app-subtitle" id="header-mode-subtitle">Pool Full Rummy &amp; Best of 7</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="header-setup-btn" class="btn btn-outline btn-sm" title="Manage players or switch game mode">
+          <span>👥</span> <span class="btn-text">Players / Mode</span>
+        </button>
+        <button id="undo-btn" class="btn btn-outline btn-sm" title="Undo last score entry or change" disabled>
+          <span>↩️</span> <span class="btn-text">Undo</span>
+        </button>
+        <button id="share-scorecard-btn" class="btn btn-outline btn-sm" title="Copy scoreboard for WhatsApp">
+          <span>📋</span> <span class="btn-text">Share</span>
+        </button>
+        <button id="new-game-btn" class="btn btn-danger-outline btn-sm" title="Start a new game or reset">
+          <span>🔄</span> <span class="btn-text">New Game</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Game Dashboard -->
+  <main>
+    <!-- VIEW 1: GAME SETUP & PLAYER MANAGEMENT WINDOW -->
+    <div id="setup-view" class="setup-container">
+      <div class="setup-card">
+        <div class="setup-header">
+          <h2>Game Setup &amp; Players</h2>
+          <p>Choose your rummy mode, manage players, and select who deals first.</p>
+        </div>
+
+        <!-- 1. Game Mode Selection -->
+        <div>
+          <div class="section-label"><span>🎮</span> 1. Select Game Mode</div>
+          <div class="mode-selection-grid">
+            <!-- Mode 1: Pool Full Rummy -->
+            <div class="mode-card selected" id="mode-card-pool" onclick="window.RummyApp.selectGameMode('pool')">
+              <div class="mode-card-header">
+                <div class="mode-card-title"><span>🎴</span> Pool Full Rummy</div>
+                <span class="mode-card-badge" id="badge-mode-pool">Selected</span>
+              </div>
+              <p class="mode-card-desc">
+                Standard 200 pool limit (out at 201+). 20/40 drops, 80 full count, and +1 re-join rule anytime up to 180 points.
+              </p>
+            </div>
+
+            <!-- Mode 2: Best of 7 Game -->
+            <div class="mode-card" id="mode-card-best7" onclick="window.RummyApp.selectGameMode('best_of_7')">
+              <div class="mode-card-header">
+                <div class="mode-card-title"><span>🎲</span> Best of 7 Game</div>
+                <span class="mode-card-badge" id="badge-mode-best7" style="display: none;">Selected</span>
+              </div>
+              <p class="mode-card-desc">
+                Fixed 7 rounds. No drops (all points manually entered). <strong>1st &amp; 7th games are 2x Double Points!</strong> Lowest total score wins.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Player Management (Add/Remove & Dealer selection) -->
+        <div class="setup-players-wrap">
+          <div class="section-label"><span>👥</span> 2. Choose Players &amp; First Dealer</div>
+
+          <!-- Add Player Bar -->
+          <form id="setup-add-player-form" class="setup-add-bar">
+            <input type="text" id="setup-player-name-input" class="form-input" placeholder="Enter player name (e.g. Rahul, Priya)" maxlength="30" required>
+            <button type="submit" class="btn btn-primary">➕ Add Player</button>
+          </form>
+
+          <!-- List of Players -->
+          <div id="setup-player-list" class="setup-player-list">
+            <!-- Filled dynamically by JS -->
+          </div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); display:flex; justify-content:space-between; align-items:center;">
+            <span>Check players to include in this game. Click <strong>🃏 1st Dealer</strong> on toss winner.</span>
+            <span id="setup-player-count-label">0 Players Selected</span>
+          </div>
+        </div>
+
+        <!-- 3. Rules Summary / Edit for Selected Mode -->
+        <div id="setup-mode-summary-box" style="background: rgba(0,0,0,0.25); border-radius: var(--radius-md); padding: 12px; border: 1px solid rgba(255,255,255,0.08); font-size: 0.85rem;">
+          <!-- Filled dynamically by JS -->
+        </div>
+
+        <!-- 4. Start Game Button -->
+        <button type="button" id="start-game-btn" class="btn btn-emerald" style="width: 100%; padding: 14px; font-size: 1.1rem;" disabled>
+          🚀 Start Game (Select at least 2 players)
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW 2: ACTIVE GAME PLAY DASHBOARD -->
+    <div id="dashboard-view" style="display: none; flex-direction: column; gap: 16px;">
+      <!-- Rules / Points Settings Bar -->
+      <div class="rules-bar">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 0.9rem; font-weight: 700; color: var(--accent-gold);" id="dashboard-rules-label">Game Rules:</span>
+          <div id="rules-chips-container" class="rules-chips">
+            <!-- Filled dynamically by JS -->
+          </div>
+        </div>
+        <button id="edit-settings-btn" class="btn btn-outline btn-sm" title="Change game points configuration">
+          <span>⚙️</span> Edit Rules
+        </button>
+      </div>
+
+      <!-- Active Game Info Card -->
+      <div id="game-info-card" class="game-info-card">
+        <!-- Filled dynamically by JS -->
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="tabs-nav">
+        <button id="tab-cards-btn" class="tab-btn active">
+          <span>🎴</span> Players &amp; Scores
+        </button>
+        <button id="tab-table-btn" class="tab-btn">
+          <span>📊</span> Full Scoreboard
+        </button>
+        <button id="tab-stats-btn" class="tab-btn">
+          <span>🏆</span> Standings
+        </button>
+      </div>
+
+      <!-- View 2A: Player Cards Grid -->
+      <div id="cards-view">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Active Table</h2>
+          <div style="display: flex; gap: 8px;">
+            <button id="edit-last-round-btn" class="btn btn-outline" style="display: none;" title="Edit the scores recorded for the previous round">
+              <span>✏️</span> Edit Last Score
+            </button>
+            <button id="record-round-btn" class="btn btn-emerald" disabled>
+              <span>➕</span> Record Round Scores
+            </button>
+          </div>
+        </div>
+        <div id="players-grid" class="players-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- View 2B: Scorecard Table View -->
+      <div id="table-view" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Scoreboard Matrix</h2>
+          <button id="edit-last-round-table-btn" class="btn btn-outline btn-sm" style="display: none;" title="Edit the scores recorded for the previous round">
+            <span>✏️</span> Edit Last Score
+          </button>
+        </div>
+        <div id="table-container">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- View 2C: Leaderboard / Statistics View -->
+      <div id="stats-view" style="display: none;">
+        <div id="stats-container">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- MODAL: Settings / Rules Configuration -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title"><span>⚙️</span> Points Configuration</h3>
+        <button id="close-settings-modal" class="modal-close">&times;</button>
+      </div>
+      <form id="settings-form">
+        <div class="modal-body" id="settings-form-body">
+          <div class="form-group" id="group-first-drop">
+            <label class="form-label" for="input-first-drop">
+              First Drop Points
+              <span class="form-hint">Default: 20</span>
+            </label>
+            <input type="number" id="input-first-drop" class="form-input" min="1" max="100" required>
+          </div>
+          <div class="form-group" id="group-middle-drop">
+            <label class="form-label" for="input-middle-drop">
+              Middle Drop Points
+              <span class="form-hint">Default: 40</span>
+            </label>
+            <input type="number" id="input-middle-drop" class="form-input" min="1" max="150" required>
+          </div>
+          <div class="form-group" id="group-full-points">
+            <label class="form-label" for="input-full-points">
+              Full Count / Max Loss Points
+              <span class="form-hint">Default: 80</span>
+            </label>
+            <input type="number" id="input-full-points" class="form-input" min="1" max="200" required>
+          </div>
+          <div class="form-group" id="group-total-points">
+            <label class="form-label" for="input-total-points">
+              Total Points Limit
+              <span class="form-hint">Default: 200</span>
+            </label>
+            <input type="number" id="input-total-points" class="form-input" min="10" max="1000" value="200" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="cancel-settings-modal" class="btn btn-outline">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Who Dealt Cards First? -->
+  <div id="first-dealer-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 460px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><span>🃏</span> Select First Dealer</h3>
+        <button id="close-first-dealer-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="first-dealer-select">Who dealt cards first? (Toss winner)</label>
+          <select id="first-dealer-select" class="form-select">
+            <!-- Filled dynamically -->
+          </select>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted);">
+          Cards deal rotates clockwise to the next active player after every round.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="save-first-dealer-btn" class="btn btn-primary" style="width: 100%;">Confirm First Dealer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Re-join Game (+1 point rule) -->
+  <div id="rejoin-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><span>🔄</span> Re-join Game</h3>
+        <button id="close-rejoin-modal" class="modal-close">&times;</button>
+      </div>
+      <form id="rejoin-form">
+        <input type="hidden" id="rejoin-player-id">
+        <div class="modal-body">
+          <div class="rejoin-callout">
+            <div style="font-weight: 700; margin-bottom: 4px;">Player: <span id="rejoin-player-name" style="color: #ffd700;"></span></div>
+            <p id="rejoin-suggested-score" style="margin-bottom: 6px;"></p>
+            <p style="font-size: 0.75rem; color: #d8b4fe;">
+              ✨ Standard rule: Eliminated player can re-join anytime at <strong>Highest Active Score + 1 point</strong> (max 180 points, so at least one drop is left).
+            </p>
+          </div>
+          <div class="form-group" style="margin-top: 10px;">
+            <label class="form-label" for="rejoin-score-input">
+              Confirmed Re-join Score
+              <span class="form-hint">(Max 180 pts)</span>
+            </label>
+            <input type="number" id="rejoin-score-input" class="form-input" min="0" max="180" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-purple" id="confirm-rejoin-btn" style="width: 100%;">Confirm &amp; Re-enter Game</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Record Round Scores -->
+  <div id="record-round-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="round-number-heading">Record Round Scores</h3>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
+            Current Dealer: <strong id="current-dealer-label" style="color: var(--accent-gold);"></strong>
+          </div>
+        </div>
+        <button id="close-record-round-modal" class="modal-close">&times;</button>
+      </div>
+      <form id="record-round-form">
+        <div class="modal-body">
+          <!-- Double score alert for Best of 7 (R1 and R7) -->
+          <div id="record-double-warning" style="display: none; margin-bottom: 12px;" class="double-score-banner">
+            <span style="font-size: 1.4rem;">⚡</span>
+            <div>
+              <strong>DOUBLE SCORE ROUND (2x)!</strong>
+              <div style="font-size: 0.78rem;">Points entered will automatically be doubled (e.g., 100 pts entered &rarr; 200 pts recorded).</div>
+            </div>
+          </div>
+
+          <p id="record-round-instruction" style="font-size: 0.8rem; color: var(--text-muted);">
+            Tap a quick button (✨ Show, 1st Drop, Mid Drop, Full Count) or enter custom card penalty points.
+          </p>
+          <div id="record-round-entries" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Generated dynamically for active players -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" id="record-round-submit-btn" class="btn btn-emerald" style="width: 100%; font-size: 1rem; padding: 12px;">
+            💾 Save Round &amp; Rotate Dealer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Edit Last Round Scores -->
+  <div id="edit-round-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 620px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="edit-round-heading"><span>✏️</span> Edit Last Round</h3>
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;" id="edit-round-subheading">
+            Modify any player's score for this round and save.
+          </div>
+        </div>
+        <button id="close-edit-round-modal" class="modal-close">&times;</button>
+      </div>
+      <form id="edit-round-form">
+        <div class="modal-body">
+          <!-- Double score alert for Edit Round (R1 and R7 in Best of 7) -->
+          <div id="edit-double-warning" style="display: none; margin-bottom: 12px;" class="double-score-banner">
+            <span style="font-size: 1.4rem;">⚡</span>
+            <div>
+              <strong>DOUBLE SCORE ROUND (2x)!</strong>
+              <div style="font-size: 0.78rem;">Points entered will automatically be doubled (e.g., 100 pts entered &rarr; 200 pts recorded).</div>
+            </div>
+          </div>
+
+          <p id="edit-round-instruction" style="font-size: 0.8rem; color: var(--text-muted);">
+            Update scores for any player below. Points, totals, and standings will automatically recalculate.
+          </p>
+          <div id="edit-round-entries" style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Generated dynamically for players in that round -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="cancel-edit-round-modal" class="btn btn-outline">Cancel</button>
+          <button type="submit" id="edit-round-submit-btn" class="btn btn-primary" style="font-size: 1rem; padding: 10px 18px;">
+            💾 Update Score
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Winner Declaration Popup -->
+  <div id="winner-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 480px; text-align: center;">
+      <div class="modal-body" style="padding: 28px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+        <div style="font-size: 3.5rem; line-height: 1; filter: drop-shadow(0 4px 12px rgba(245, 197, 24, 0.4));">🏆</div>
+        <div>
+          <span class="badge" id="winner-badge-pill" style="background: rgba(245, 197, 24, 0.2); color: #ffd700; border: 1px solid rgba(245, 197, 24, 0.4); font-size: 0.75rem; padding: 4px 12px;">
+            GAME OVER • WINNER DECLARED
+          </span>
+          <h2 id="winner-name-banner" style="font-size: 1.8rem; font-weight: 900; margin-top: 10px; background: linear-gradient(135deg, #ffffff, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+            Winner
+          </h2>
+          <p id="winner-stats-summary" style="font-size: 0.9rem; color: var(--text-muted); margin-top: 6px;">
+            Final Score: 0 pts
+          </p>
+        </div>
+
+        <div id="winner-runners-up-box" style="width: 100%; background: rgba(0,0,0,0.3); border-radius: var(--radius-md); padding: 12px; border: 1px solid rgba(255,255,255,0.08); font-size: 0.85rem; text-align: left;">
+          <!-- Standings summary -->
+        </div>
+
+        <div style="width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+          <button type="button" id="winner-new-game-btn" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1rem;">
+            🏆 End &amp; Start New Game
+          </button>
+          <div style="display: flex; gap: 10px; justify-content: center; width: 100%;">
+            <button type="button" id="winner-edit-last-btn" class="btn btn-outline btn-sm" style="flex: 1;" title="Edit last round score if entered incorrectly">
+              ✏️ Edit Last Round Score
+            </button>
+            <button type="button" id="close-winner-modal" class="btn btn-outline btn-sm" style="flex: 1;">
+              📊 View Scoreboard
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=2.4"></script>
+</body>
+</html>
