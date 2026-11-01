@@ -992,8 +992,8 @@
 
     let headHtml = `
       <tr>
-        <th style="width: 60px;">Rnd</th>
-        <th style="width: 80px;">Dealer</th>
+        <th class="col-rnd" style="width: 60px;">Rnd</th>
+        <th class="col-dealer" style="width: 80px;">Dealer</th>
         ${state.players.map(p => `
           <th class="player-header">
             <div>${escapeHtml(p.name)}</div>
@@ -1007,7 +1007,7 @@
     if (state.rounds.length === 0) {
       rowsHtml = `
         <tr>
-          <td colspan="${state.players.length + 2}" style="padding: 24px; color: var(--text-muted);">
+          <td colspan="100" style="padding: 24px; color: var(--text-muted);">
             No rounds played yet. Click "Record Round" to add the first round scores.
           </td>
         </tr>
@@ -1020,11 +1020,12 @@
 
         return `
           <tr>
-            <td style="font-weight: 700; color: var(--accent-gold);">
-              R${round.roundNum}
+            <td class="col-rnd" style="font-weight: 700; color: var(--accent-gold);">
+              <div>R${round.roundNum}</div>
               ${isDoubleRound ? '<div style="font-size:0.6rem; color:#fbbf24;">⚡ 2x</div>' : ''}
+              <div class="rnd-dealer-mobile" style="font-size:0.65rem; color:var(--text-muted); font-weight:normal; display:none; margin-top:2px;" title="Dealer: ${escapeHtml(dealerName)}">🃏 ${escapeHtml(dealerName)}</div>
             </td>
-            <td style="font-size: 0.8rem; color: var(--text-muted);">🃏 ${escapeHtml(dealerName)}</td>
+            <td class="col-dealer" style="font-size: 0.8rem; color: var(--text-muted);">🃏 ${escapeHtml(dealerName)}</td>
             ${state.players.map(p => {
               const pts = round.scores ? round.scores[p.id] : undefined;
               const cumulativeScore = round.cumulative ? round.cumulative[p.id] : undefined;
@@ -1074,7 +1075,8 @@
 
     const totalRowHtml = `
       <tr class="total-row">
-        <td colspan="2" style="text-align: right; padding-right: 16px;">CURRENT TOTAL:</td>
+        <td class="col-rnd total-label" style="text-align: center; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em;">TOTAL:</td>
+        <td class="col-dealer" style="text-align: right; padding-right: 8px;"></td>
         ${state.players.map(p => {
           let color = '#34d399';
           if (p.isOut) color = '#ef4444';

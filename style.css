@@ -300,34 +300,46 @@ main {
   gap: 6px;
 }
 
-/* Tabs */
+/* Segmented Navigation Tabs */
 .tabs-nav {
   display: flex;
-  gap: 8px;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 2px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tab-btn {
-  background: none;
-  border: none;
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   color: var(--text-muted);
-  font-size: 0.95rem;
-  font-weight: 600;
-  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 8px 6px;
   cursor: pointer;
-  border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
 }
+
 .tab-btn:hover {
-  color: var(--text-main);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
 }
+
 .tab-btn.active {
+  background: var(--surface-card);
   color: var(--accent-gold);
-  border-bottom-color: var(--accent-gold);
+  border-color: rgba(255, 215, 0, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* Player Cards Grid */
@@ -635,7 +647,10 @@ main {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-lg);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: var(--shadow-lg);
+  position: relative;
+  width: 100%;
 }
 
 .score-table {
@@ -646,20 +661,29 @@ main {
 }
 
 .score-table th {
-  background: rgba(12, 32, 20, 0.95);
+  background: rgba(12, 32, 20, 0.98);
   color: var(--text-gold);
-  padding: 12px 14px;
+  padding: 10px 12px;
   font-weight: 700;
   border-bottom: 2px solid rgba(255, 215, 0, 0.3);
   white-space: nowrap;
 }
 
+.score-table th.col-rnd {
+  width: 64px;
+  min-width: 64px;
+}
+
+.score-table th.col-dealer {
+  width: 85px;
+}
+
 .score-table th.player-header {
-  min-width: 110px;
+  min-width: 95px;
 }
 
 .score-table td {
-  padding: 10px 14px;
+  padding: 8px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   white-space: nowrap;
 }
@@ -671,9 +695,10 @@ main {
 .score-table tr.total-row td {
   font-weight: 800;
   font-size: 1.05rem;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.45);
   border-top: 2px solid rgba(255, 215, 0, 0.4);
   color: #fff;
+  padding: 10px 10px;
 }
 
 .round-cell {
@@ -1360,14 +1385,65 @@ button, input, select {
     -webkit-overflow-scrolling: touch;
     border-radius: var(--radius-md);
   }
+  /* Mobile Scoreboard Optimizations */
+  .score-table th.col-dealer,
+  .score-table td.col-dealer {
+    display: none !important;
+  }
+  .rnd-dealer-mobile {
+    display: block !important;
+  }
   /* Sticky Round column on mobile scoreboard */
-  .score-table th:first-child,
-  .score-table td:first-child {
+  .score-table th.col-rnd,
+  .score-table td.col-rnd {
     position: sticky;
     left: 0;
-    z-index: 2;
+    z-index: 3;
     background: #0d281a;
-    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.4);
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.5);
+    width: 62px;
+    min-width: 62px;
+    padding: 6px 4px;
+    font-size: 0.8rem;
+  }
+  .score-table th.player-header {
+    min-width: 76px;
+    padding: 8px 4px;
+    font-size: 0.8rem;
+  }
+  .score-table td {
+    padding: 6px 4px;
+    font-size: 0.8rem;
+  }
+  .cell-val {
+    font-size: 0.825rem;
+  }
+  .cell-running {
+    font-size: 0.65rem;
+  }
+  .score-table tr.total-row td {
+    font-size: 0.95rem;
+    padding: 8px 4px;
+  }
+
+  /* Segmented tabs on mobile */
+  .tabs-nav {
+    padding: 3px;
+    gap: 3px;
+  }
+  .tab-btn {
+    font-size: 0.775rem;
+    padding: 7px 4px;
+    gap: 4px;
+  }
+
+  /* Rules chips on mobile */
+  .rules-chips {
+    gap: 6px;
+  }
+  .rule-chip {
+    padding: 3px 8px;
+    font-size: 0.725rem;
   }
 }
 
