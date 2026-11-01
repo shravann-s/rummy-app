@@ -1196,12 +1196,14 @@
       els.setupView.style.display = 'block';
       els.dashboardView.style.display = 'none';
       els.headerModeSubtitle.textContent = 'Player Management & Mode Selection';
+      if (els.headerSetupBtn) els.headerSetupBtn.style.display = 'none';
       renderSetupView();
       return;
     }
 
     els.setupView.style.display = 'none';
     els.dashboardView.style.display = 'flex';
+    if (els.headerSetupBtn) els.headerSetupBtn.style.display = 'inline-flex';
     els.headerModeSubtitle.textContent = isBestOf7() ? 'Best of 7 Game Mode' : 'Pool Full Rummy Mode';
 
     renderRulesBar();
