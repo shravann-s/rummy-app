@@ -545,33 +545,30 @@ main {
 .score-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 0.875rem;
   text-align: center;
 }
 
-/* Auto-Fit mode when up to 6 players are at the table */
-.score-table.fit-matrix-dense {
-  table-layout: fixed !important;
-  width: 100% !important;
+col.col-rnd-spec {
+  width: 48px;
+}
+
+col.col-player-spec {
+  width: auto;
 }
 
 .score-table thead th {
   background: rgba(7, 20, 14, 0.95);
   color: var(--accent-gold);
-  padding: 8px 3px;
-  font-size: 0.775rem;
+  padding: 12px 8px;
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   border-bottom: 2px solid rgba(229, 184, 92, 0.35);
   white-space: normal;
   word-break: break-word;
-}
-
-.score-table.fit-matrix-dense thead th {
-  padding: 6px 2px;
-  font-size: 0.72rem;
-  white-space: normal;
 }
 
 /* Sticky # (Round) Column */
@@ -582,69 +579,56 @@ main {
   z-index: 5;
   background: #091f15;
   box-shadow: 2px 0 6px rgba(0, 0, 0, 0.45);
-  width: 26px;
-  min-width: 26px;
-  max-width: 28px;
-  padding: 4px 1px;
+  width: 48px;
+  min-width: 44px;
+  padding: 8px 4px;
   text-align: center;
   font-family: var(--font-mono);
+  font-size: 0.85rem;
 }
 
 .score-table th.player-header {
-  padding: 6px 2px;
+  padding: 10px 8px;
   min-width: 0;
 }
 
 .th-player-wrap {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 6px;
   width: 100%;
 }
 
 .th-player-name {
   font-weight: 700;
   color: #fff;
-  font-size: 0.72rem;
-  line-height: 1.1;
+  font-size: 0.9rem;
+  line-height: 1.25;
   white-space: normal;
   word-break: break-word;
   overflow-wrap: break-word;
   max-width: 100%;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
   text-align: center;
 }
 
-.score-table.fit-matrix-dense .th-player-name {
-  font-size: 0.68rem;
-  line-height: 1.08;
-}
-
 .th-dealer-badge {
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   line-height: 1;
 }
 
 .th-out-badge {
-  font-size: 0.55rem;
-  padding: 1px 3px;
-  margin-top: 1px;
+  font-size: 0.58rem;
+  padding: 1px 4px;
+  margin-left: 4px;
 }
 
 .score-table td {
-  padding: 5px 2px;
+  padding: 8px 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   white-space: normal;
   min-width: 0;
-}
-
-.score-table.fit-matrix-dense td {
-  padding: 4px 1px;
 }
 
 .score-table tr:hover td {
@@ -658,21 +642,16 @@ main {
   background: rgba(4, 14, 9, 0.95);
   border-top: 2px solid rgba(229, 184, 92, 0.5);
   color: #fff;
-  padding: 8px 2px;
+  padding: 10px 6px;
 }
 
-.score-table.fit-matrix-dense tr.total-row td {
-  font-size: 0.85rem;
-  padding: 6px 1px;
-}
-
-/* Round Cell Interior Layout - Compact Wrapped Micro-Lines */
+/* Round Cell Interior Layout */
 .round-cell {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 2px;
   width: 100%;
 }
 
@@ -680,19 +659,19 @@ main {
   background: rgba(229, 184, 92, 0.08);
   border: 1px dashed rgba(229, 184, 92, 0.4);
   border-radius: var(--radius-sm);
-  padding: 2px 1px;
+  padding: 3px 4px;
 }
 
 .cell-top-line {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
   line-height: 1.1;
 }
 
 .cell-dealer-icon {
-  font-size: 0.68rem;
+  font-size: 0.8rem;
   line-height: 1;
   flex-shrink: 0;
 }
@@ -700,85 +679,66 @@ main {
 .cell-score-val {
   font-family: var(--font-mono);
   font-weight: 800;
-  font-size: 0.78rem;
+  font-size: 0.95rem;
   line-height: 1.1;
   color: #fff;
 }
 
-.cell-score-val.win {
-  color: #34d399;
-}
-.cell-score-val.first-drop {
-  color: #60a5fa;
-}
-.cell-score-val.mid-drop {
-  color: #f59e0b;
-}
-.cell-score-val.full {
-  color: #ef4444;
-}
-.cell-score-val.double {
-  color: #fbbf24;
-}
+.cell-score-val.win { color: #34d399; }
+.cell-score-val.first-drop { color: #60a5fa; }
+.cell-score-val.mid-drop { color: #f59e0b; }
+.cell-score-val.full { color: #ef4444; }
+.cell-score-val.double { color: #fbbf24; }
 
 .cell-sub-type {
-  font-size: 0.58rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   line-height: 1;
-  padding: 1px 3px;
+  padding: 1px 5px;
   border-radius: var(--radius-full);
 }
-.cell-sub-type.win {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-}
-.cell-sub-type.first-drop {
-  background: rgba(59, 130, 246, 0.2);
-  color: #93c5fd;
-}
-.cell-sub-type.mid-drop {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fcd34d;
-}
-.cell-sub-type.full {
-  background: rgba(239, 68, 68, 0.2);
-  color: #fca5a5;
-}
-.cell-sub-type.double {
-  background: rgba(245, 158, 11, 0.25);
-  color: #fde68a;
-}
+.cell-sub-type.win { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.cell-sub-type.first-drop { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+.cell-sub-type.mid-drop { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+.cell-sub-type.full { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+.cell-sub-type.double { background: rgba(245, 158, 11, 0.25); color: #fde68a; }
 
 .cell-running {
-  font-size: 0.58rem;
+  font-size: 0.68rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
   line-height: 1.1;
   margin-top: 1px;
-  white-space: nowrap;
 }
 
 .cell-out-tag {
   color: #ef4444;
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 800;
   line-height: 1.1;
 }
 
 .total-score-val {
-  font-size: 0.88rem;
+  font-size: 1.05rem;
   font-weight: 800;
   font-family: var(--font-mono);
   line-height: 1.1;
 }
 
 .total-out-label {
-  font-size: 0.55rem;
+  font-size: 0.6rem;
   color: #ef4444;
   font-weight: 800;
   line-height: 1;
+}
+
+.empty-rounds-cell {
+  padding: 36px 16px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  text-align: center;
 }
 
 /* ==========================================================================
@@ -1870,37 +1830,97 @@ main {
   }
 
   /* Sticky Round Column on Mobile Scoreboard */
+  col.col-rnd-spec {
+    width: 26px !important;
+  }
+
   .score-table th.col-rnd,
   .score-table td.col-rnd {
-    width: 28px;
-    min-width: 28px;
-    max-width: 32px;
-    padding: 6px 2px;
-    font-size: 0.775rem;
+    width: 26px !important;
+    min-width: 26px !important;
+    max-width: 28px !important;
+    padding: 4px 1px !important;
+    font-size: 0.72rem !important;
   }
 
   .score-table th.player-header {
-    min-width: 0;
-    padding: 6px 2px;
+    min-width: 0 !important;
+    padding: 6px 2px !important;
+  }
+
+  .th-player-wrap {
+    flex-direction: column !important;
+    gap: 1px !important;
+  }
+
+  .th-player-name {
+    font-size: 0.68rem !important;
+    line-height: 1.08 !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+  }
+
+  .th-dealer-badge {
+    font-size: 0.7rem !important;
   }
 
   .score-table td {
-    padding: 6px 2px;
-    min-width: 0;
+    padding: 4px 1px !important;
+    min-width: 0 !important;
   }
 
-  .cell-val {
-    font-size: 0.75rem;
-    padding: 2px 4px;
+  .round-cell {
+    gap: 1px !important;
+  }
+
+  .round-cell.is-dealer-cell {
+    padding: 2px 1px !important;
+  }
+
+  .cell-top-line {
+    gap: 2px !important;
+  }
+
+  .cell-dealer-icon {
+    font-size: 0.68rem !important;
+  }
+
+  .cell-score-val {
+    font-size: 0.78rem !important;
+  }
+
+  .cell-sub-type {
+    font-size: 0.58rem !important;
+    padding: 1px 3px !important;
   }
 
   .cell-running {
-    font-size: 0.6rem;
+    font-size: 0.58rem !important;
+    white-space: nowrap !important;
+  }
+
+  .cell-out-tag {
+    font-size: 0.65rem !important;
   }
 
   .score-table tr.total-row td {
-    font-size: 0.9rem;
-    padding: 8px 2px;
+    font-size: 0.85rem !important;
+    padding: 6px 1px !important;
+  }
+
+  .total-score-val {
+    font-size: 0.88rem !important;
+  }
+
+  .total-out-label {
+    font-size: 0.55rem !important;
+  }
+
+  .empty-rounds-cell {
+    padding: 24px 10px !important;
+    font-size: 0.85rem !important;
   }
 
   .tabs-nav {
@@ -1939,30 +1959,5 @@ main {
 
   .players-grid {
     grid-template-columns: 1fr;
-  }
-
-  .score-table.fit-matrix-dense th.col-rnd,
-  .score-table.fit-matrix-dense td.col-rnd {
-    width: 26px;
-    min-width: 26px;
-    max-width: 28px;
-    padding: 4px 1px;
-    font-size: 0.725rem;
-  }
-  .score-table.fit-matrix-dense th.player-header {
-    padding: 4px 1px;
-  }
-  .score-table.fit-matrix-dense td {
-    padding: 4px 1px;
-  }
-  .score-table.fit-matrix-dense .th-player-name {
-    font-size: 0.65rem;
-  }
-  .score-table.fit-matrix-dense .cell-val {
-    font-size: 0.7rem;
-    padding: 1px 3px;
-  }
-  .score-table.fit-matrix-dense .cell-running {
-    font-size: 0.55rem;
   }
 }

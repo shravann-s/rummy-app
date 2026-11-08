@@ -1227,6 +1227,14 @@
 
     // OPTION 2: AUTO-FIT TABLE MATRIX (All columns fit side-by-side with zero horizontal scroll up to 6 players)
     const fitsScreen = state.players.length <= 6;
+    const totalCols = state.players.length + 1;
+
+    const colGroupHtml = `
+      <colgroup>
+        <col class="col-rnd-spec">
+        ${state.players.map(() => '<col class="col-player-spec">').join('')}
+      </colgroup>
+    `;
 
     let headHtml = `
       <tr>
@@ -1250,7 +1258,7 @@
     if (state.rounds.length === 0) {
       rowsHtml = `
         <tr>
-          <td colspan="100" style="padding: 24px; color: var(--text-muted);">
+          <td colspan="${totalCols}" class="empty-rounds-cell">
             No rounds played yet. Click "Record Round" to add the first round scores.
           </td>
         </tr>
@@ -1336,6 +1344,7 @@
     els.tableContainer.innerHTML = `
       <div class="table-wrapper fit-matrix-wrapper ${fitsScreen ? 'fit-no-scroll' : 'can-scroll'}">
         <table class="score-table ${fitsScreen ? 'fit-matrix-dense' : ''}">
+          ${colGroupHtml}
           <thead>${headHtml}</thead>
           <tbody>${rowsHtml}</tbody>
           <tfoot>${totalRowHtml}</tfoot>
