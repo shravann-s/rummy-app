@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3.2">
+  <link rel="stylesheet" href="style.css?v=3.3">
 </head>
 <body>
 
@@ -87,9 +87,9 @@
           <div class="section-label"><span>👥</span> 2. Choose Players &amp; First Dealer</div>
 
           <!-- Add Player Bar -->
-          <form id="setup-add-player-form" class="setup-add-bar">
-            <input type="text" id="setup-player-name-input" class="form-input" placeholder="Enter player name (e.g. Rahul)" maxlength="30" required>
-            <button type="submit" class="btn btn-primary">➕ Add Player</button>
+          <form id="setup-add-player-form" class="setup-add-bar" onsubmit="window.RummyApp.handleAddPlayer(event); return false;" action="javascript:void(0);">
+            <input type="text" id="setup-player-name-input" class="form-input" placeholder="Enter player name (e.g. Rahul, Priya)" maxlength="30" autocomplete="off" autocorrect="off" autocapitalize="words" required>
+            <button type="button" id="setup-add-player-btn" class="btn btn-primary" onclick="window.RummyApp.handleAddPlayer(event)">➕ Add Player</button>
           </form>
 
           <!-- List of Players -->
@@ -443,6 +443,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=3.2"></script>
+  <script src="app.js?v=3.3"></script>
 </body>
 </html>

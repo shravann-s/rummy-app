@@ -184,13 +184,33 @@
           settings: { ...defaultSettings, ...(parsed.settings || {}) }
         };
 
-        // Initialize roster if not present
-        if (!state.roster || state.roster.length === 0) {
-          state.roster = (state.players || []).map(p => ({ id: p.id, name: p.name }));
+        // Initialize roster if not present or clean malformed items
+        if (!state.roster || !Array.isArray(state.roster) || state.roster.length === 0) {
+          state.roster = (state.players || [])
+            .filter(p => p && (p.name || p.id))
+            .map(p => ({
+              id: String(p.id || 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
+              name: String(p.name || 'Player').trim()
+            }))
+            .filter(p => p.name.length > 0);
+        } else {
+          state.roster = state.roster
+            .filter(p => p && typeof p === 'object' && (p.name || p.id))
+            .map(p => ({
+              id: String(p.id || 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4)),
+              name: String(p.name || '').trim()
+            }))
+            .filter(p => p.name.length > 0);
         }
 
-        if (!state.selectedPlayerIds || state.selectedPlayerIds.length === 0) {
+        if (!state.selectedPlayerIds || !Array.isArray(state.selectedPlayerIds) || state.selectedPlayerIds.length === 0) {
           state.selectedPlayerIds = state.roster.map(p => p.id);
+        } else {
+          const rosterIdSet = new Set(state.roster.map(p => p.id));
+          state.selectedPlayerIds = state.selectedPlayerIds.filter(id => rosterIdSet.has(id));
+          if (state.selectedPlayerIds.length === 0 && state.roster.length > 0) {
+            state.selectedPlayerIds = state.roster.map(p => p.id);
+          }
         }
 
         // Migrate player rejoinHistory
@@ -520,10 +540,18 @@
   }
 
   function addPlayerToRoster(name) {
-    if (!name || !name.trim()) return;
+    if (!name || typeof name !== 'string') return;
     const cleanName = name.trim();
+    if (!cleanName) return;
 
-    if (state.roster.some(p => p.name.toLowerCase() === cleanName.toLowerCase())) {
+    if (!Array.isArray(state.roster)) {
+      state.roster = [];
+    }
+
+    const alreadyExists = state.roster.some(
+      p => p && p.name && p.name.trim().toLowerCase() === cleanName.toLowerCase()
+    );
+    if (alreadyExists) {
       showToast(`Player "${cleanName}" already exists`, 'danger');
       return;
     }
@@ -532,6 +560,9 @@
     const newEntry = { id: newId, name: cleanName };
 
     state.roster.push(newEntry);
+    if (!Array.isArray(state.selectedPlayerIds)) {
+      state.selectedPlayerIds = [];
+    }
     state.selectedPlayerIds.push(newId);
 
     if (!state.firstDealerId) {
@@ -541,6 +572,24 @@
     saveState();
     renderSetupView();
     showToast(`Player "${cleanName}" added!`, 'success');
+  }
+
+  function handleAddPlayer(e) {
+    if (e) {
+      if (typeof e.preventDefault === 'function') e.preventDefault();
+      if (typeof e.stopPropagation === 'function') e.stopPropagation();
+    }
+    const input = document.getElementById('setup-player-name-input');
+    if (!input) return false;
+    const val = input.value;
+    if (!val || !val.trim()) {
+      input.focus();
+      return false;
+    }
+    addPlayerToRoster(val);
+    input.value = '';
+    input.focus();
+    return false;
   }
 
   function moveRosterPlayer(playerId, direction) {
@@ -1177,7 +1226,7 @@
     }
 
     // OPTION 2: AUTO-FIT TABLE MATRIX (All columns fit side-by-side with zero horizontal scroll up to 6 players)
-    const isDense = state.players.length >= 5;
+    const fitsScreen = state.players.length <= 6;
 
     let headHtml = `
       <tr>
@@ -1187,10 +1236,10 @@
           return `
             <th class="player-header">
               <div class="th-player-wrap">
-                <span class="th-player-name">${escapeHtml(p.name)}</span>
                 ${isCurrentDealer ? '<span class="th-dealer-badge" title="Current Dealer">🃏</span>' : ''}
+                <span class="th-player-name">${escapeHtml(p.name)}</span>
               </div>
-              ${p.isOut ? '<span class="badge badge-out" style="font-size: 0.55rem; margin-top: 1px;">OUT</span>' : ''}
+              ${p.isOut ? '<span class="badge badge-out th-out-badge">OUT</span>' : ''}
             </th>
           `;
         }).join('')}
@@ -1224,39 +1273,39 @@
               const rejoinEvent = p.rejoinHistory ? p.rejoinHistory.find(h => h.roundNum === round.roundNum) : null;
 
               if (pts === undefined || pts === null) {
-                return `<td><span style="color: #ef4444; font-size: 0.725rem; font-weight:700;">OUT</span></td>`;
+                return `<td><span class="cell-out-tag">OUT</span></td>`;
               }
 
               let valClass = '';
-              let badge = '';
+              let typeLabel = '';
               if (pts === 0) {
                 valClass = 'win';
-                badge = isDense ? '0' : 'Show 0';
+                typeLabel = 'Show';
               } else if (!isBestOf7() && pts === state.settings.firstDrop) {
                 valClass = 'first-drop';
-                badge = isDense ? `D${pts}` : `Drop ${pts}`;
+                typeLabel = 'Drop';
               } else if (!isBestOf7() && pts === state.settings.middleDrop) {
                 valClass = 'mid-drop';
-                badge = isDense ? `M${pts}` : `Mid ${pts}`;
+                typeLabel = 'Mid';
               } else if (!isBestOf7() && pts === state.settings.fullPoints) {
                 valClass = 'full';
-                badge = isDense ? `F${pts}` : `Full ${pts}`;
+                typeLabel = 'Full';
               } else if (isDoubleRound && rawPts !== undefined) {
-                badge = isDense ? `${pts}` : `${pts} (${rawPts}x2)`;
-              } else {
-                badge = `${pts}`;
+                valClass = 'double';
+                typeLabel = '2x';
               }
 
-              const displayTotal = cumulativeScore !== undefined ? (isDense ? `${cumulativeScore}` : `Total: ${cumulativeScore}`) : '-';
+              const displayTotal = cumulativeScore !== undefined ? cumulativeScore : '-';
 
               return `
                 <td>
                   <div class="round-cell ${isDealerThisRound ? 'is-dealer-cell' : ''}">
-                    <div class="cell-main-line">
+                    <div class="cell-top-line">
                       ${isDealerThisRound ? '<span class="cell-dealer-icon" title="Dealer this round">🃏</span>' : ''}
-                      <span class="cell-val ${valClass}">${badge}</span>
+                      <span class="cell-score-val ${valClass}">${pts}</span>
                     </div>
-                    <span class="cell-running" title="Running score after Round ${round.roundNum}">${displayTotal}</span>
+                    ${typeLabel ? `<span class="cell-sub-type ${valClass}">${typeLabel}</span>` : ''}
+                    <span class="cell-running" title="Running score after Round ${round.roundNum}">Tot ${displayTotal}</span>
                     ${rejoinEvent ? `<span class="badge badge-rejoined" style="font-size:0.5rem; margin-top:1px;">+${rejoinEvent.rejoinScore}</span>` : ''}
                   </div>
                 </td>
@@ -1269,15 +1318,15 @@
 
     const totalRowHtml = `
       <tr class="total-row">
-        <td class="col-rnd total-label" style="text-align: center; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em;">TOT:</td>
+        <td class="col-rnd total-label" style="text-align: center; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em;">TOT:</td>
         ${state.players.map(p => {
           let color = '#34d399';
           if (p.isOut) color = '#ef4444';
           else if (!isBestOf7() && p.score >= state.settings.totalPoints * 0.75) color = '#f59e0b';
           return `
-            <td style="color: ${color}; font-weight: 800;">
-              ${p.score}
-              ${p.isOut ? '<div style="font-size:0.6rem; color:#ef4444; font-weight:700;">OUT</div>' : ''}
+            <td class="total-cell" style="color: ${color};">
+              <div class="total-score-val">${p.score}</div>
+              ${p.isOut ? '<div class="total-out-label">OUT</div>' : ''}
             </td>
           `;
         }).join('')}
@@ -1285,15 +1334,14 @@
     `;
 
     els.tableContainer.innerHTML = `
-      <div class="table-wrapper fit-matrix-wrapper">
-        <table class="score-table ${isDense ? 'fit-matrix-dense' : ''}">
+      <div class="table-wrapper fit-matrix-wrapper ${fitsScreen ? 'fit-no-scroll' : 'can-scroll'}">
+        <table class="score-table ${fitsScreen ? 'fit-matrix-dense' : ''}">
           <thead>${headHtml}</thead>
           <tbody>${rowsHtml}</tbody>
           <tfoot>${totalRowHtml}</tfoot>
         </table>
       </div>
     `;
-  }
   }
 
   function renderStatsView() {
@@ -2150,11 +2198,7 @@
 
     // Setup Form & Buttons
     if (els.setupAddPlayerForm) {
-      els.setupAddPlayerForm.onsubmit = (e) => {
-        e.preventDefault();
-        addPlayerToRoster(els.setupPlayerNameInput.value);
-        els.setupPlayerNameInput.value = '';
-      };
+      els.setupAddPlayerForm.onsubmit = handleAddPlayer;
     }
     if (els.startGameBtn) {
       els.startGameBtn.onclick = startGame;
@@ -2252,6 +2296,8 @@
 
   // --- Expose Public API for inline HTML handlers ---
   window.RummyApp = {
+    handleAddPlayer,
+    addPlayerToRoster,
     selectGameMode,
     togglePlayerSelection,
     setSetupFirstDealer,
