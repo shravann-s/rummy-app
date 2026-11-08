@@ -11,8 +11,7 @@
   --font-family: var(--font-sans);
 
   /* Deep Luxury Casino Felt Background */
-  --bg-gradient: radial-gradient(120% 120% at 50% 0%, #123725 0%, #0a2016 45%, #040d09 100%);
-  --bg-fixed-attachment: fixed;
+  --bg-gradient: radial-gradient(120% 120% at 50% 0%, #17422d 0%, #0c251a 45%, #040e09 100%);
 
   /* Frosted Glass & Velvet Surfaces */
   --surface-card: rgba(14, 36, 26, 0.78);
@@ -77,14 +76,20 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  background-color: #040e09;
+  background: var(--bg-gradient);
+  min-height: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font-family);
+  background-color: #040e09;
   background: var(--bg-gradient);
-  background-attachment: var(--bg-fixed-attachment);
   color: var(--text-main);
-  min-height: 100vh;
+  min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   display: flex;
   flex-direction: column;
   line-height: 1.5;
@@ -92,21 +97,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   padding-bottom: env(safe-area-inset-bottom, 16px);
-}
-
-/* Subtle background illumination at top */
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100vw;
-  max-width: 1400px;
-  height: 380px;
-  background: radial-gradient(ellipse at 50% 0%, rgba(229, 184, 92, 0.08), transparent 75%);
-  pointer-events: none;
-  z-index: 0;
+  overflow-x: hidden;
 }
 
 /* ==========================================================================
@@ -986,46 +977,80 @@ main {
   color: var(--text-dim);
 }
 
+@media (max-width: 480px) {
+  .setup-add-bar {
+    flex-direction: column;
+  }
+  .setup-add-bar .btn {
+    width: 100%;
+    padding: 10px;
+  }
+}
+
 /* Setup Roster List */
 .setup-player-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 320px;
-  overflow-y: auto;
-  padding-right: 4px;
+  gap: 10px;
+  max-height: none;
+  padding-right: 0;
 }
 
 .setup-player-item {
-  background: rgba(6, 18, 12, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(6, 18, 12, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
-  padding: 8px 12px;
+  padding: 10px 14px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  flex-direction: column;
+  gap: 10px;
   transition: all 0.15s ease;
 }
 
 .setup-player-item:hover {
-  background: rgba(10, 28, 19, 0.75);
+  background: rgba(10, 28, 19, 0.85);
+  border-color: rgba(229, 184, 92, 0.3);
+}
+
+.setup-player-item.selected {
   border-color: rgba(229, 184, 92, 0.25);
+}
+
+.setup-player-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
 }
 
 .setup-player-left {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
   min-width: 0;
+}
+
+.setup-player-name-label {
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   flex: 1;
 }
 
-.setup-player-right {
+.setup-player-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  width: 100%;
 }
 
 .player-checkbox {
@@ -1561,9 +1586,25 @@ main {
 }
 
 @media (max-width: 480px) {
+  main {
+    padding: 8px 6px;
+    gap: 10px;
+  }
+
   .setup-card {
-    padding: 16px;
+    padding: 14px 12px;
     border-radius: var(--radius-lg);
+    gap: 16px;
+  }
+
+  .setup-player-list {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .setup-player-item {
+    padding: 8px 10px;
+    gap: 8px;
   }
 
   .players-grid {

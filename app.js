@@ -580,30 +580,18 @@
         const initial = p.name.trim().charAt(0).toUpperCase();
 
         return `
-          <div class="setup-player-item">
-            <div class="setup-player-left">
-              <input type="checkbox"
-                     class="player-checkbox"
-                     id="chk-${p.id}"
-                     ${isSelected ? 'checked' : ''}
-                     onchange="window.RummyApp.togglePlayerSelection('${p.id}')">
-              <div class="player-avatar" style="width: 32px; height: 32px; font-size: 0.9rem;">${initial}</div>
-              <label for="chk-${p.id}" style="font-weight: 700; color: #fff; cursor: pointer;">
-                ${escapeHtml(p.name)}
-              </label>
-            </div>
-            <div class="setup-player-right">
-              ${isSelected ? `
-                <button type="button"
-                        class="btn-dealer-pick ${isFirstDealer ? 'selected' : ''}"
-                        onclick="window.RummyApp.setSetupFirstDealer('${p.id}')"
-                        title="Click to select as 1st Dealer">
-                  ${isFirstDealer ? '🃏 1st Dealer' : 'Make 1st Dealer'}
-                </button>
-              ` : ''}
-              <div class="reorder-btn-group">
-                <button type="button" class="btn-reorder" onclick="window.RummyApp.moveRosterPlayer('${p.id}', 'up')" title="Move up in dealer order" ${index === 0 ? 'disabled' : ''}>⬆️</button>
-                <button type="button" class="btn-reorder" onclick="window.RummyApp.moveRosterPlayer('${p.id}', 'down')" title="Move down in dealer order" ${index === state.roster.length - 1 ? 'disabled' : ''}>⬇️</button>
+          <div class="setup-player-item ${isSelected ? 'selected' : ''}">
+            <div class="setup-player-header">
+              <div class="setup-player-left">
+                <input type="checkbox"
+                       class="player-checkbox"
+                       id="chk-${p.id}"
+                       ${isSelected ? 'checked' : ''}
+                       onchange="window.RummyApp.togglePlayerSelection('${p.id}')">
+                <div class="player-avatar" style="width: 32px; height: 32px; font-size: 0.9rem;">${initial}</div>
+                <label for="chk-${p.id}" class="setup-player-name-label">
+                  ${escapeHtml(p.name)}
+                </label>
               </div>
               <button type="button"
                       class="btn-remove-player"
@@ -611,6 +599,20 @@
                       title="Delete player from roster">
                 🗑️
               </button>
+            </div>
+            <div class="setup-player-actions">
+              ${isSelected ? `
+                <button type="button"
+                        class="btn-dealer-pick ${isFirstDealer ? 'selected' : ''}"
+                        onclick="window.RummyApp.setSetupFirstDealer('${p.id}')"
+                        title="Click to select as 1st Dealer">
+                  ${isFirstDealer ? '🃏 1st Dealer' : 'Make 1st Dealer'}
+                </button>
+              ` : '<span style="font-size:0.75rem; color:var(--text-dim);">Not in this game</span>'}
+              <div class="reorder-btn-group">
+                <button type="button" class="btn-reorder" onclick="window.RummyApp.moveRosterPlayer('${p.id}', 'up')" title="Move up in dealer order" ${index === 0 ? 'disabled' : ''}>⬆️</button>
+                <button type="button" class="btn-reorder" onclick="window.RummyApp.moveRosterPlayer('${p.id}', 'down')" title="Move down in dealer order" ${index === state.roster.length - 1 ? 'disabled' : ''}>⬇️</button>
+              </div>
             </div>
           </div>
         `;
