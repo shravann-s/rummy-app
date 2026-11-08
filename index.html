@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3.1">
+  <link rel="stylesheet" href="style.css?v=3.2">
 </head>
 <body>
 
@@ -151,12 +151,15 @@
       <div id="table-view">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
           <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Scoreboard Matrix</h2>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+            <button id="toggle-matrix-view-btn" class="btn btn-outline btn-sm" title="Toggle between auto-fit table and wrapped round cards">
+              <span id="matrix-view-icon">🎴</span> <span id="matrix-view-label">Wrapped Cards</span>
+            </button>
             <button id="realign-dealers-table-btn" class="btn btn-outline btn-sm" title="Realign dealer rotation order & seating">
-              <span>🃏</span> Reorder Dealers
+              <span>🃏</span> Reorder
             </button>
             <button id="edit-last-round-table-btn" class="btn btn-outline btn-sm" style="display: none;" title="Edit the scores recorded for the previous round">
-              <span>✏️</span> Edit Last Score
+              <span>✏️</span> Edit Last
             </button>
           </div>
         </div>
@@ -440,6 +443,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=3.1"></script>
+  <script src="app.js?v=3.2"></script>
 </body>
 </html>

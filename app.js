@@ -82,6 +82,7 @@
 
   let state = {
     gameMode: 'pool', // 'pool' or 'best_of_7'
+    matrixViewMode: 'table', // 'table' or 'wrapped'
     settings: { ...defaultSettings },
     roster: [], // Master player list: [ { id, name } ]
     selectedPlayerIds: [], // IDs participating in current game
@@ -341,6 +342,9 @@
     recordRoundBtn: document.getElementById('record-round-btn'),
     editLastRoundBtn: document.getElementById('edit-last-round-btn'),
     editLastRoundTableBtn: document.getElementById('edit-last-round-table-btn'),
+    toggleMatrixViewBtn: document.getElementById('toggle-matrix-view-btn'),
+    matrixViewIcon: document.getElementById('matrix-view-icon'),
+    matrixViewLabel: document.getElementById('matrix-view-label'),
     realignDealersTableBtn: document.getElementById('realign-dealers-table-btn'),
     realignDealersCardsBtn: document.getElementById('realign-dealers-cards-btn'),
     undoBtn: document.getElementById('undo-btn'),
@@ -625,22 +629,41 @@
     // 3. Mode summary preview
     if (isPool) {
       els.setupModeSummaryBox.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div>
-            <strong style="color: var(--accent-gold);">Pool Full Rummy Format:</strong>
-            <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;">
-              200 Total Limit (Out at 201+) • Drops: ${state.settings.firstDrop} / ${state.settings.middleDrop} • Full: ${state.settings.fullPoints} • Re-join up to 180
+        <div class="summary-card-inner">
+          <div class="summary-header-row">
+            <div class="summary-title">
+              <span>🎴</span>
+              <strong style="color: var(--accent-gold);">Pool Full Rummy Rules</strong>
             </div>
+            <button type="button" class="btn btn-outline btn-sm btn-rules-edit" onclick="window.RummyApp.openSettingsModal()" title="Customize drops, full count, or total limit">
+              <span>⚙️</span> Edit Rules
+            </button>
           </div>
-          <button class="btn btn-outline btn-sm" onclick="window.RummyApp.openSettingsModal()">⚙️ Edit Rules</button>
+          <div class="summary-chips-wrap">
+            <span class="rule-chip"><span class="label">Total Limit:</span> <span class="val">${state.settings.totalPoints} (Out at ${state.settings.totalPoints + 1}+)</span></span>
+            <span class="rule-chip"><span class="label">Drops:</span> <span class="val">${state.settings.firstDrop} / ${state.settings.middleDrop}</span></span>
+            <span class="rule-chip"><span class="label">Full:</span> <span class="val">${state.settings.fullPoints}</span></span>
+            <span class="rule-chip"><span class="label">Re-join:</span> <span class="val">&le;${getMaxRejoinLimit()} (+1 rule)</span></span>
+          </div>
         </div>
       `;
     } else {
       els.setupModeSummaryBox.innerHTML = `
-        <div>
-          <strong style="color: #fbbf24;">Best of 7 Format:</strong>
-          <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;">
-            7 Fixed Rounds • No Drops (manual points entry) • <strong>1st &amp; 7th games are 2x Double Points!</strong> • Lowest cumulative score wins!
+        <div class="summary-card-inner">
+          <div class="summary-header-row">
+            <div class="summary-title">
+              <span>🎲</span>
+              <strong style="color: #fbbf24;">Best of 7 Rules</strong>
+            </div>
+            <span class="badge" style="background:rgba(245, 158, 11, 0.2); color:#fbbf24; border:1px solid rgba(245, 158, 11, 0.4);">
+              Fixed 7 Rounds
+            </span>
+          </div>
+          <div class="summary-chips-wrap">
+            <span class="rule-chip"><span class="label">Rounds:</span> <span class="val">7 Fixed</span></span>
+            <span class="rule-chip"><span class="label">Double Score:</span> <span class="val" style="color:#fbbf24;">R1 &amp; R7 (2x)</span></span>
+            <span class="rule-chip"><span class="label">Win Rule:</span> <span class="val" style="color:#34d399;">Least Score</span></span>
+            <span class="rule-chip"><span class="label">Drops:</span> <span class="val">None (Manual)</span></span>
           </div>
         </div>
       `;
@@ -1022,6 +1045,140 @@
       return;
     }
 
+    // Update toggle button text & icon
+    if (els.toggleMatrixViewBtn) {
+      const isWrapped = state.matrixViewMode === 'wrapped';
+      if (els.matrixViewIcon) els.matrixViewIcon.textContent = isWrapped ? '📊' : '🎴';
+      if (els.matrixViewLabel) els.matrixViewLabel.textContent = isWrapped ? 'Table Matrix' : 'Wrapped Cards';
+    }
+
+    // OPTION 1: WRAPPED CARDS MATRIX (Zero horizontal scroll, rounds wrap players into 3x2 grid)
+    if (state.matrixViewMode === 'wrapped') {
+      if (state.rounds.length === 0) {
+        els.tableContainer.innerHTML = `
+          <div class="empty-state">
+            <p>No rounds played yet. Click "Record Round" to add the first round scores.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const wrappedCardsHtml = state.rounds.map((round) => {
+        const dealerPlayer = state.players.find(p => p.id === round.dealerId);
+        const dealerName = dealerPlayer ? dealerPlayer.name : '-';
+        const isDoubleRound = isBestOf7() && (round.roundNum === 1 || round.roundNum === 7);
+
+        return `
+          <div class="wrapped-round-card">
+            <div class="wrapped-round-header">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="badge" style="background:var(--accent-gold); color:#081d13; font-weight:800; font-family:var(--font-mono); font-size:0.75rem;">
+                  Round ${round.roundNum}
+                </span>
+                ${isDoubleRound ? '<span class="badge" style="background:#f59e0b; color:#fff; font-size:0.65rem;">⚡ 2x Double</span>' : ''}
+              </div>
+              <span style="font-size:0.775rem; color:var(--text-muted);">
+                Dealer: <strong style="color:var(--text-gold);">${escapeHtml(dealerName)}</strong> 🃏
+              </span>
+            </div>
+            <div class="wrapped-round-grid">
+              ${state.players.map(p => {
+                const isDealerThisRound = p.id === round.dealerId;
+                const pts = round.scores ? round.scores[p.id] : undefined;
+                const cumulativeScore = round.cumulative ? round.cumulative[p.id] : undefined;
+                const rawPts = round.rawScores ? round.rawScores[p.id] : undefined;
+                const rejoinEvent = p.rejoinHistory ? p.rejoinHistory.find(h => h.roundNum === round.roundNum) : null;
+
+                if (pts === undefined || pts === null) {
+                  return `
+                    <div class="wrapped-player-tile is-out">
+                      <div class="wrapped-tile-name-row">
+                        <span class="wrapped-player-name">${escapeHtml(p.name)}</span>
+                        <span class="badge badge-out" style="font-size:0.55rem;">OUT</span>
+                      </div>
+                      <div class="wrapped-tile-score-row">
+                        <span style="color:#ef4444; font-size:0.75rem; font-weight:700;">Eliminated</span>
+                      </div>
+                    </div>
+                  `;
+                }
+
+                let valClass = '';
+                let badge = '';
+                if (pts === 0) {
+                  valClass = 'win';
+                  badge = 'Show 0';
+                } else if (!isBestOf7() && pts === state.settings.firstDrop) {
+                  valClass = 'first-drop';
+                  badge = `Drop ${pts}`;
+                } else if (!isBestOf7() && pts === state.settings.middleDrop) {
+                  valClass = 'mid-drop';
+                  badge = `Mid ${pts}`;
+                } else if (!isBestOf7() && pts === state.settings.fullPoints) {
+                  valClass = 'full';
+                  badge = `Full ${pts}`;
+                } else if (isDoubleRound && rawPts !== undefined) {
+                  badge = `${pts} (${rawPts}x2)`;
+                } else {
+                  badge = `${pts}`;
+                }
+
+                const displayTotal = cumulativeScore !== undefined ? cumulativeScore : '-';
+
+                return `
+                  <div class="wrapped-player-tile ${isDealerThisRound ? 'is-dealer' : ''}">
+                    <div class="wrapped-tile-name-row">
+                      <span class="wrapped-player-name">${escapeHtml(p.name)}</span>
+                      ${isDealerThisRound ? '<span class="cell-dealer-icon" title="Dealer">🃏</span>' : ''}
+                    </div>
+                    <div class="wrapped-tile-score-row">
+                      <span class="cell-val ${valClass}">${badge}</span>
+                      <span class="wrapped-cumulative" title="Running score">Tot: ${displayTotal}</span>
+                    </div>
+                    ${rejoinEvent ? `<span class="badge badge-rejoined" style="font-size:0.55rem; margin-top:2px;">Re-joined @ ${rejoinEvent.rejoinScore}</span>` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const wrappedStandingsHtml = `
+        <div class="wrapped-standings-card">
+          <div style="font-size:0.8rem; font-weight:800; color:var(--accent-gold); text-transform:uppercase; letter-spacing:0.04em;">
+            🏆 Current Table Standings
+          </div>
+          <div class="wrapped-standings-grid">
+            ${state.players.map(p => {
+              let color = '#34d399';
+              if (p.isOut) color = '#ef4444';
+              else if (!isBestOf7() && p.score >= state.settings.totalPoints * 0.75) color = '#f59e0b';
+              return `
+                <div class="wrapped-standing-item">
+                  <div class="wrapped-standing-name">${escapeHtml(p.name)}</div>
+                  <div class="wrapped-standing-score" style="color:${color}; font-weight:800; font-family:var(--font-mono);">
+                    ${p.score} ${p.isOut ? '<span style="font-size:0.6rem; color:#ef4444;">OUT</span>' : 'pts'}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      els.tableContainer.innerHTML = `
+        <div class="wrapped-matrix-container">
+          ${wrappedCardsHtml}
+          ${wrappedStandingsHtml}
+        </div>
+      `;
+      return;
+    }
+
+    // OPTION 2: AUTO-FIT TABLE MATRIX (All columns fit side-by-side with zero horizontal scroll up to 6 players)
+    const isDense = state.players.length >= 5;
+
     let headHtml = `
       <tr>
         <th class="col-rnd">#</th>
@@ -1033,7 +1190,7 @@
                 <span class="th-player-name">${escapeHtml(p.name)}</span>
                 ${isCurrentDealer ? '<span class="th-dealer-badge" title="Current Dealer">🃏</span>' : ''}
               </div>
-              ${p.isOut ? '<span class="badge badge-out" style="font-size: 0.6rem; margin-top: 2px;">OUT</span>' : ''}
+              ${p.isOut ? '<span class="badge badge-out" style="font-size: 0.55rem; margin-top: 1px;">OUT</span>' : ''}
             </th>
           `;
         }).join('')}
@@ -1067,30 +1224,30 @@
               const rejoinEvent = p.rejoinHistory ? p.rejoinHistory.find(h => h.roundNum === round.roundNum) : null;
 
               if (pts === undefined || pts === null) {
-                return `<td><span style="color: #ef4444; font-size: 0.75rem; font-weight:700;">OUT</span></td>`;
+                return `<td><span style="color: #ef4444; font-size: 0.725rem; font-weight:700;">OUT</span></td>`;
               }
 
               let valClass = '';
               let badge = '';
               if (pts === 0) {
                 valClass = 'win';
-                badge = 'Show 0';
+                badge = isDense ? '0' : 'Show 0';
               } else if (!isBestOf7() && pts === state.settings.firstDrop) {
                 valClass = 'first-drop';
-                badge = `Drop ${pts}`;
+                badge = isDense ? `D${pts}` : `Drop ${pts}`;
               } else if (!isBestOf7() && pts === state.settings.middleDrop) {
                 valClass = 'mid-drop';
-                badge = `Mid ${pts}`;
+                badge = isDense ? `M${pts}` : `Mid ${pts}`;
               } else if (!isBestOf7() && pts === state.settings.fullPoints) {
                 valClass = 'full';
-                badge = `Full ${pts}`;
+                badge = isDense ? `F${pts}` : `Full ${pts}`;
               } else if (isDoubleRound && rawPts !== undefined) {
-                badge = `${pts} <span style="font-size:0.65rem; color:#f59e0b;">(${rawPts}&times;2)</span>`;
+                badge = isDense ? `${pts}` : `${pts} (${rawPts}x2)`;
               } else {
                 badge = `${pts}`;
               }
 
-              const displayTotal = cumulativeScore !== undefined ? cumulativeScore : '-';
+              const displayTotal = cumulativeScore !== undefined ? (isDense ? `${cumulativeScore}` : `Total: ${cumulativeScore}`) : '-';
 
               return `
                 <td>
@@ -1099,8 +1256,8 @@
                       ${isDealerThisRound ? '<span class="cell-dealer-icon" title="Dealer this round">🃏</span>' : ''}
                       <span class="cell-val ${valClass}">${badge}</span>
                     </div>
-                    <span class="cell-running" title="Running score after Round ${round.roundNum}">Total: ${displayTotal}</span>
-                    ${rejoinEvent ? `<span class="badge badge-rejoined" style="font-size:0.55rem; margin-top:2px;">Re-joined @ ${rejoinEvent.rejoinScore}</span>` : ''}
+                    <span class="cell-running" title="Running score after Round ${round.roundNum}">${displayTotal}</span>
+                    ${rejoinEvent ? `<span class="badge badge-rejoined" style="font-size:0.5rem; margin-top:1px;">+${rejoinEvent.rejoinScore}</span>` : ''}
                   </div>
                 </td>
               `;
@@ -1112,15 +1269,15 @@
 
     const totalRowHtml = `
       <tr class="total-row">
-        <td class="col-rnd total-label" style="text-align: center; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em;">TOTAL:</td>
+        <td class="col-rnd total-label" style="text-align: center; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em;">TOT:</td>
         ${state.players.map(p => {
           let color = '#34d399';
           if (p.isOut) color = '#ef4444';
           else if (!isBestOf7() && p.score >= state.settings.totalPoints * 0.75) color = '#f59e0b';
           return `
-            <td style="color: ${color};">
+            <td style="color: ${color}; font-weight: 800;">
               ${p.score}
-              ${p.isOut ? '<div style="font-size:0.65rem; color:#ef4444; font-weight:700;">OUT</div>' : ''}
+              ${p.isOut ? '<div style="font-size:0.6rem; color:#ef4444; font-weight:700;">OUT</div>' : ''}
             </td>
           `;
         }).join('')}
@@ -1128,14 +1285,15 @@
     `;
 
     els.tableContainer.innerHTML = `
-      <div class="table-wrapper">
-        <table class="score-table">
+      <div class="table-wrapper fit-matrix-wrapper">
+        <table class="score-table ${isDense ? 'fit-matrix-dense' : ''}">
           <thead>${headHtml}</thead>
           <tbody>${rowsHtml}</tbody>
           <tfoot>${totalRowHtml}</tfoot>
         </table>
       </div>
     `;
+  }
   }
 
   function renderStatsView() {
@@ -1384,6 +1542,13 @@
     saveState();
     renderApp();
     renderDealerOrderModalList();
+  }
+
+  function toggleMatrixViewMode() {
+    state.matrixViewMode = state.matrixViewMode === 'wrapped' ? 'table' : 'wrapped';
+    saveState();
+    renderTableView();
+    showToast(state.matrixViewMode === 'wrapped' ? '🎴 Switched to Wrapped Cards View' : '📊 Switched to Auto-fit Table Matrix', 'info');
   }
 
   function setDealerFromModal(playerId) {
@@ -2045,6 +2210,11 @@
     els.newGameBtn.onclick = handleNewGame;
     els.shareScorecardBtn.onclick = handleShareScorecard;
 
+    // Matrix View Mode Toggle
+    if (els.toggleMatrixViewBtn) {
+      els.toggleMatrixViewBtn.onclick = toggleMatrixViewMode;
+    }
+
     // Dealer Order Realign
     if (els.realignDealersTableBtn) {
       els.realignDealersTableBtn.onclick = openDealerOrderModal;
@@ -2090,6 +2260,7 @@
     movePlayerInGame,
     setDealerFromModal,
     openDealerOrderModal,
+    toggleMatrixViewMode,
     returnToSetup,
     openRejoinModal,
     openFirstDealerModal,
