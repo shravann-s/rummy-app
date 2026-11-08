@@ -10,7 +10,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Rummy Scoreboard">
   <meta name="format-detection" content="telephone=no">
-  <link rel="stylesheet" href="style.css?v=2.6">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=3.0">
 </head>
 <body>
 
@@ -18,7 +21,7 @@
   <header>
     <div class="header-container">
       <div class="logo-area">
-        <span class="cards-icon">♠️♥️♦️♣️</span>
+        <span class="cards-icon" aria-label="Suits"><span class="suit-black">♠</span><span class="suit-red">♥</span><span class="suit-red">♦</span><span class="suit-black">♣</span></span>
         <div>
           <h1 class="app-title">Rummy Scoreboard</h1>
           <p class="app-subtitle" id="header-mode-subtitle">Pool Full Rummy &amp; Best of 7</p>
@@ -131,53 +134,61 @@
         <!-- Filled dynamically by JS -->
       </div>
 
-      <!-- Navigation Tabs -->
+      <!-- Navigation Tabs: Scoreboard (1st/Home), Standings (2nd), Cards (3rd) -->
       <div class="tabs-nav">
-        <button id="tab-cards-btn" class="tab-btn active">
-          <span>🎴</span> <span class="tab-label">Cards</span>
-        </button>
-        <button id="tab-table-btn" class="tab-btn">
+        <button id="tab-table-btn" class="tab-btn active">
           <span>📊</span> <span class="tab-label">Scoreboard</span>
         </button>
         <button id="tab-stats-btn" class="tab-btn">
           <span>🏆</span> <span class="tab-label">Standings</span>
         </button>
+        <button id="tab-cards-btn" class="tab-btn">
+          <span>🎴</span> <span class="tab-label">Cards</span>
+        </button>
       </div>
 
-      <!-- View 2A: Player Cards Grid -->
-      <div id="cards-view">
+      <!-- View 1: Scorecard Table View (DEFAULT HOME VIEW) -->
+      <div id="table-view">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-          <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Active Table</h2>
-          <div style="display: flex; gap: 8px;">
-            <button id="edit-last-round-btn" class="btn btn-outline" style="display: none;" title="Edit the scores recorded for the previous round">
+          <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Scoreboard Matrix</h2>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="realign-dealers-table-btn" class="btn btn-outline btn-sm" title="Realign dealer rotation order & seating">
+              <span>🃏</span> Reorder Dealers
+            </button>
+            <button id="edit-last-round-table-btn" class="btn btn-outline btn-sm" style="display: none;" title="Edit the scores recorded for the previous round">
               <span>✏️</span> Edit Last Score
             </button>
-            <button id="record-round-btn" class="btn btn-emerald" disabled>
-              <span>➕</span> Record Round Scores
-            </button>
           </div>
-        </div>
-        <div id="players-grid" class="players-grid">
-          <!-- Rendered by JS -->
-        </div>
-      </div>
-
-      <!-- View 2B: Scorecard Table View -->
-      <div id="table-view" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Scoreboard Matrix</h2>
-          <button id="edit-last-round-table-btn" class="btn btn-outline btn-sm" style="display: none;" title="Edit the scores recorded for the previous round">
-            <span>✏️</span> Edit Last Score
-          </button>
         </div>
         <div id="table-container">
           <!-- Rendered by JS -->
         </div>
       </div>
 
-      <!-- View 2C: Leaderboard / Statistics View -->
+      <!-- View 2: Leaderboard / Statistics View -->
       <div id="stats-view" style="display: none;">
         <div id="stats-container">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- View 3: Player Cards Grid (THIRD OPTION) -->
+      <div id="cards-view" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff;">Active Table Cards</h2>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="realign-dealers-cards-btn" class="btn btn-outline btn-sm" title="Realign dealer rotation order & seating">
+              <span>🃏</span> Reorder Dealers
+            </button>
+            <button id="edit-last-round-btn" class="btn btn-outline btn-sm" style="display: none;" title="Edit the scores recorded for the previous round">
+              <span>✏️</span> Edit Last Score
+            </button>
+            <button id="record-round-btn" class="btn btn-emerald btn-sm" disabled>
+              <span>➕</span> Record Round
+            </button>
+          </div>
+        </div>
+        <div id="players-grid" class="players-grid">
           <!-- Rendered by JS -->
         </div>
       </div>
@@ -253,6 +264,29 @@
       </div>
       <div class="modal-footer">
         <button type="button" id="save-first-dealer-btn" class="btn btn-primary" style="width: 100%;">Confirm First Dealer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Realign Dealer Order -->
+  <div id="dealer-order-modal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title"><span>🃏</span> Realign Dealer Order</h3>
+        <button id="close-dealer-order-modal" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.825rem; color: var(--text-muted); margin-bottom: 6px;">
+          Table seating &amp; dealer rotation order. Dealing rotates sequentially down this list after every round.
+        </p>
+        <div id="dealer-order-list" style="display: flex; flex-direction: column; gap: 8px;">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-emerald" id="close-dealer-order-done-btn" style="width: 100%;">
+          ✓ Done
+        </button>
       </div>
     </div>
   </div>
@@ -406,6 +440,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=2.6"></script>
+  <script src="app.js?v=3.0"></script>
 </body>
 </html>

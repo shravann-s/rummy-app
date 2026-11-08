@@ -341,11 +341,17 @@
     recordRoundBtn: document.getElementById('record-round-btn'),
     editLastRoundBtn: document.getElementById('edit-last-round-btn'),
     editLastRoundTableBtn: document.getElementById('edit-last-round-table-btn'),
+    realignDealersTableBtn: document.getElementById('realign-dealers-table-btn'),
+    realignDealersCardsBtn: document.getElementById('realign-dealers-cards-btn'),
     undoBtn: document.getElementById('undo-btn'),
     newGameBtn: document.getElementById('new-game-btn'),
     shareScorecardBtn: document.getElementById('share-scorecard-btn'),
 
     // Modals
+    dealerOrderModal: document.getElementById('dealer-order-modal'),
+    closeDealerOrderModal: document.getElementById('close-dealer-order-modal'),
+    closeDealerOrderDoneBtn: document.getElementById('close-dealer-order-done-btn'),
+    dealerOrderList: document.getElementById('dealer-order-list'),
     settingsModal: document.getElementById('settings-modal'),
     settingsForm: document.getElementById('settings-form'),
     closeSettingsModal: document.getElementById('close-settings-modal'),
@@ -533,6 +539,25 @@
     showToast(`Player "${cleanName}" added!`, 'success');
   }
 
+  function moveRosterPlayer(playerId, direction) {
+    const idx = state.roster.findIndex(p => p.id === playerId);
+    if (idx < 0) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= state.roster.length) return;
+
+    const temp = state.roster[idx];
+    state.roster[idx] = state.roster[targetIdx];
+    state.roster[targetIdx] = temp;
+
+    // Preserve order of selected IDs based on new roster order
+    state.selectedPlayerIds = state.roster
+      .filter(p => state.selectedPlayerIds.includes(p.id))
+      .map(p => p.id);
+
+    saveState();
+    renderSetupView();
+  }
+
   function renderSetupView() {
     // 1. Mode Cards
     const isPool = state.gameMode === 'pool';
@@ -549,7 +574,7 @@
         </div>
       `;
     } else {
-      els.setupPlayerList.innerHTML = state.roster.map(p => {
+      els.setupPlayerList.innerHTML = state.roster.map((p, index) => {
         const isSelected = state.selectedPlayerIds.includes(p.id);
         const isFirstDealer = state.firstDealerId === p.id && isSelected;
         const initial = p.name.trim().charAt(0).toUpperCase();
@@ -576,6 +601,10 @@
                   ${isFirstDealer ? '🃏 1st Dealer' : 'Make 1st Dealer'}
                 </button>
               ` : ''}
+              <div class="reorder-btn-group">
+                <button type="button" class="btn-reorder" onclick="window.RummyApp.moveRosterPlayer('${p.id}', 'up')" title="Move up in dealer order" ${index === 0 ? 'disabled' : ''}>⬆️</button>
+                <button type="button" class="btn-reorder" onclick="window.RummyApp.moveRosterPlayer('${p.id}', 'down')" title="Move down in dealer order" ${index === state.roster.length - 1 ? 'disabled' : ''}>⬇️</button>
+              </div>
               <button type="button"
                       class="btn-remove-player"
                       onclick="window.RummyApp.removePlayerFromRoster('${p.id}')"
@@ -654,6 +683,7 @@
 
     saveState();
     renderApp();
+    switchTab('table');
     showToast(`Game started in ${isBestOf7() ? 'Best of 7' : 'Pool Full Rummy'} mode!`, 'success');
   }
 
@@ -992,14 +1022,19 @@
 
     let headHtml = `
       <tr>
-        <th class="col-rnd" style="width: 60px;">Rnd</th>
-        <th class="col-dealer" style="width: 80px;">Dealer</th>
-        ${state.players.map(p => `
-          <th class="player-header">
-            <div>${escapeHtml(p.name)}</div>
-            ${p.isOut ? '<span class="badge badge-out" style="font-size: 0.6rem;">OUT</span>' : ''}
-          </th>
-        `).join('')}
+        <th class="col-rnd">#</th>
+        ${state.players.map(p => {
+          const isCurrentDealer = state.currentDealerId === p.id;
+          return `
+            <th class="player-header">
+              <div class="th-player-wrap">
+                <span class="th-player-name">${escapeHtml(p.name)}</span>
+                ${isCurrentDealer ? '<span class="th-dealer-badge" title="Current Dealer">🃏</span>' : ''}
+              </div>
+              ${p.isOut ? '<span class="badge badge-out" style="font-size: 0.6rem; margin-top: 2px;">OUT</span>' : ''}
+            </th>
+          `;
+        }).join('')}
       </tr>
     `;
 
@@ -1014,19 +1049,16 @@
       `;
     } else {
       rowsHtml = state.rounds.map((round) => {
-        const dealerPlayer = state.players.find(p => p.id === round.dealerId);
-        const dealerName = dealerPlayer ? dealerPlayer.name : '-';
         const isDoubleRound = isBestOf7() && (round.roundNum === 1 || round.roundNum === 7);
 
         return `
           <tr>
-            <td class="col-rnd" style="font-weight: 700; color: var(--accent-gold);">
-              <div>R${round.roundNum}</div>
-              ${isDoubleRound ? '<div style="font-size:0.6rem; color:#fbbf24;">⚡ 2x</div>' : ''}
-              <div class="rnd-dealer-mobile" style="font-size:0.65rem; color:var(--text-muted); font-weight:normal; display:none; margin-top:2px;" title="Dealer: ${escapeHtml(dealerName)}">🃏 ${escapeHtml(dealerName)}</div>
+            <td class="col-rnd" style="font-weight: 800; color: var(--accent-gold);">
+              <div>${round.roundNum}</div>
+              ${isDoubleRound ? '<div style="font-size:0.55rem; color:#fbbf24; line-height:1;">2x</div>' : ''}
             </td>
-            <td class="col-dealer" style="font-size: 0.8rem; color: var(--text-muted);">🃏 ${escapeHtml(dealerName)}</td>
             ${state.players.map(p => {
+              const isDealerThisRound = p.id === round.dealerId;
               const pts = round.scores ? round.scores[p.id] : undefined;
               const cumulativeScore = round.cumulative ? round.cumulative[p.id] : undefined;
               const rawPts = round.rawScores ? round.rawScores[p.id] : undefined;
@@ -1060,8 +1092,11 @@
 
               return `
                 <td>
-                  <div class="round-cell">
-                    <span class="cell-val ${valClass}">${badge}</span>
+                  <div class="round-cell ${isDealerThisRound ? 'is-dealer-cell' : ''}">
+                    <div class="cell-main-line">
+                      ${isDealerThisRound ? '<span class="cell-dealer-icon" title="Dealer this round">🃏</span>' : ''}
+                      <span class="cell-val ${valClass}">${badge}</span>
+                    </div>
                     <span class="cell-running" title="Running score after Round ${round.roundNum}">Total: ${displayTotal}</span>
                     ${rejoinEvent ? `<span class="badge badge-rejoined" style="font-size:0.55rem; margin-top:2px;">Re-joined @ ${rejoinEvent.rejoinScore}</span>` : ''}
                   </div>
@@ -1076,7 +1111,6 @@
     const totalRowHtml = `
       <tr class="total-row">
         <td class="col-rnd total-label" style="text-align: center; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.05em;">TOTAL:</td>
-        <td class="col-dealer" style="text-align: right; padding-right: 8px;"></td>
         ${state.players.map(p => {
           let color = '#34d399';
           if (p.isOut) color = '#ef4444';
@@ -1331,6 +1365,80 @@
     closeModal(els.firstDealerModal);
     renderApp();
     showToast(`First dealer set to ${state.players.find(p => p.id === selectedId)?.name}`, 'success');
+  }
+
+  // --- Handlers: Realign Dealer Order (Seating & Rotation) ---
+  function movePlayerInGame(playerId, direction) {
+    const idx = state.players.findIndex(p => p.id === playerId);
+    if (idx < 0) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= state.players.length) return;
+
+    pushHistory();
+    const temp = state.players[idx];
+    state.players[idx] = state.players[targetIdx];
+    state.players[targetIdx] = temp;
+
+    saveState();
+    renderApp();
+    renderDealerOrderModalList();
+  }
+
+  function setDealerFromModal(playerId) {
+    const player = state.players.find(p => p.id === playerId);
+    if (!player || player.isOut) return;
+    pushHistory();
+    state.currentDealerId = playerId;
+    saveState();
+    renderApp();
+    renderDealerOrderModalList();
+    showToast(`🃏 Dealer set to ${player.name}`, 'info');
+  }
+
+  function renderDealerOrderModalList() {
+    if (!els.dealerOrderList) return;
+    if (state.players.length === 0) {
+      els.dealerOrderList.innerHTML = `<p style="color:var(--text-muted); text-align:center;">No players at the table.</p>`;
+      return;
+    }
+
+    els.dealerOrderList.innerHTML = state.players.map((p, index) => {
+      const isCurrentDealer = state.currentDealerId === p.id;
+      return `
+        <div class="dealer-order-item ${isCurrentDealer ? 'is-current-dealer' : ''} ${p.isOut ? 'is-out' : ''}">
+          <div class="dealer-order-left">
+            <span class="dealer-order-num">${index + 1}.</span>
+            <span class="dealer-order-name">${escapeHtml(p.name)}</span>
+            ${isCurrentDealer ? '<span class="badge badge-dealer" style="font-size:0.65rem;">🃏 Dealing</span>' : ''}
+            ${p.isOut ? '<span class="badge badge-out" style="font-size:0.6rem;">OUT</span>' : ''}
+          </div>
+          <div class="dealer-order-actions">
+            ${!isCurrentDealer && !p.isOut ? `
+              <button type="button" class="btn btn-outline btn-sm" style="padding:4px 8px; font-size:0.75rem;" onclick="window.RummyApp.setDealerFromModal('${p.id}')" title="Make active dealer">
+                Deal
+              </button>
+            ` : ''}
+            <div class="reorder-btn-group">
+              <button type="button" class="btn-reorder" onclick="window.RummyApp.movePlayerInGame('${p.id}', 'up')" title="Move earlier in dealer order" ${index === 0 ? 'disabled' : ''}>⬆️</button>
+              <button type="button" class="btn-reorder" onclick="window.RummyApp.movePlayerInGame('${p.id}', 'down')" title="Move later in dealer order" ${index === state.players.length - 1 ? 'disabled' : ''}>⬇️</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openDealerOrderModal() {
+    if (state.players.length === 0) {
+      showToast('No active players to reorder', 'danger');
+      return;
+    }
+    renderDealerOrderModalList();
+    openModal(els.dealerOrderModal);
+  }
+
+  function closeDealerOrderModalFunc() {
+    closeModal(els.dealerOrderModal);
   }
 
   // --- Handlers: Re-join (Pool mode only) ---
@@ -1935,6 +2043,20 @@
     els.newGameBtn.onclick = handleNewGame;
     els.shareScorecardBtn.onclick = handleShareScorecard;
 
+    // Dealer Order Realign
+    if (els.realignDealersTableBtn) {
+      els.realignDealersTableBtn.onclick = openDealerOrderModal;
+    }
+    if (els.realignDealersCardsBtn) {
+      els.realignDealersCardsBtn.onclick = openDealerOrderModal;
+    }
+    if (els.closeDealerOrderModal) {
+      els.closeDealerOrderModal.onclick = closeDealerOrderModalFunc;
+    }
+    if (els.closeDealerOrderDoneBtn) {
+      els.closeDealerOrderDoneBtn.onclick = closeDealerOrderModalFunc;
+    }
+
     // Tabs
     els.tabCardsBtn.onclick = () => switchTab('cards');
     els.tabTableBtn.onclick = () => switchTab('table');
@@ -1962,6 +2084,10 @@
     togglePlayerSelection,
     setSetupFirstDealer,
     removePlayerFromRoster,
+    moveRosterPlayer,
+    movePlayerInGame,
+    setDealerFromModal,
+    openDealerOrderModal,
     returnToSetup,
     openRejoinModal,
     openFirstDealerModal,
@@ -1977,6 +2103,9 @@
     loadState();
     initEvents();
     renderApp();
+    if (state.gameStarted) {
+      switchTab('table');
+    }
   }
 
   if (document.readyState === 'loading') {
